@@ -1,0 +1,28 @@
+<!DOCTYPE html>
+<html>
+<!-- 
+這是read text file 的 sample program 
+style 的  * 是全域選擇器,  見  HTML5 + CSS3 王者歸來  p11-21
+--> 
+<head>
+   <meta charset="utf-8">
+   <title>ReadFileSample05.html</title>
+   <style>
+    * {font:16px "標楷體";}
+	#myCanvas {border:2px solid blue;} 
+   </style>
+</head>
+<body  >
+	<button type="button" id="btnPlay">
+		play Audio
+	</button>
+ 
+	<button type="button" id="btnPause">
+		pause Audio
+	</button>
+<input type="file" id="file0" />
+<button onclick="playAudio();"></button><br>
+<canvas id="myCanvas" width="848" height="477">瀏覽器不支援canvas元素</canvas>
+<script src="index.js"></script>
+</body>
+</html>
