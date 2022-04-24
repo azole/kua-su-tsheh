@@ -16,9 +16,11 @@
       #subtitle {
         width: 100%;
         max-width: 600px;
-        display: flex;
+        display: none;
         flex-direction: column;
         justify-content: flex-start;
+        border: 1px solid #00d1b2;
+        border-radius: 4px;
       }
       ul {
         list-style-type: none;
@@ -29,7 +31,7 @@
       }
       ul li {
         display: inline-block;
-        padding-right: 4px;
+        padding: 4px;
         border-bottom: 1px solid #ccc;
       }
       ul li span {
@@ -60,7 +62,7 @@
         let $currentTime = $('#currentTime');
         function processSubtitle() {
           let currentTime = audioEle.currentTime * 10;
-          $currentTime.text(currentTime);
+          $currentTime.text(parseInt(currentTime, 10));
           let currentLineIdx = null;
           let currentLines = $allLines.filter(function (idx, tr) {
             let isCurrent = $(this).data('start') <= currentTime && $(this).data('end') > currentTime;
@@ -105,6 +107,7 @@
         $('#btnStart').on('click', async () => {
           $('#btnStart').hide();
           let res = await axios.get('/api/read-file');
+          $subtitle.css('display', 'flex');
           totalLines = res.data.subtitle.length;
           res.data.subtitle.map((line, idx) => {
             let $ul = $('<ul>').data('idx', idx).data('start', line.start).data('end', line.end);
