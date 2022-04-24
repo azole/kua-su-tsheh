@@ -9,23 +9,44 @@
         background-color: #00d1b2;
         color: #fff;
       }
-      table {
-        border-collapse: collapse;
+      .current-word {
+        background-color: rgb(72, 199, 116);
+        color: #fff;
       }
-      tr.kha {
-        border-bottom: 1px solid #ddd;
+      #subtitle {
+        width: 100%;
+        max-width: 600px;
+        display: flex;
+        flex-direction: column;
+        justify-content: flex-start;
       }
-      tr.rom {
+      ul {
+        list-style-type: none;
+        padding: 0;
+        margin: 0;
+        display: inline-flex;
+        flex-wrap: wrap;
       }
-      td.rom {
-        font-size: 12px;
+      ul li {
+        display: inline-block;
+        padding-right: 4px;
+        border-bottom: 1px solid #ccc;
+      }
+      ul li span {
+        display: block;
+        font-size: 18px;
+        white-space: nowrap;
+        text-align: center;
+      }
+      span.rom {
+        font-size: 14px;
       }
     </style>
   </head>
   <body>
     <button id="btnStart">選擇播放</button>
     <audio id="player" controls="controls" style="display: none">Your browser does not support the audio element.</audio>
-    <table id="subtitle"></table>
+    <div id="subtitle"></div>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.6.0/jquery.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/axios/0.26.1/axios.min.js"></script>
     <script>
@@ -33,15 +54,15 @@
         let audioEle = document.getElementById('player');
         let timer = null;
         let $subtitle = $('#subtitle');
-        let $allRomTrs = null;
-        let $allKhaTrs = null;
+        let $allLines = null;
         let totalLines = 0;
         function processSubtitle() {
           let currentTime = audioEle.currentTime * 10;
           let currentLineIdx = null;
-          let currentLines = $allRomTrs.filter(function (idx, tr) {
+          let currentLines = $allLines.filter(function (idx, tr) {
             let isCurrent = $(this).data('start') <= currentTime && $(this).data('end') > currentTime;
             if (isCurrent) {
+              // console.log($(this).data('start'), $(this).data('end'), currentTime);
               currentLineIdx = $(this).data('idx');
             }
             return isCurrent;
@@ -51,24 +72,26 @@
               showEnd = 0;
             if (currentLineIdx <= 2) {
               showStart = 0;
-              showEnd = 5;
+              showEnd = 7;
             } else if (currentLineIdx >= totalLines - 3) {
               showStart = totalLines - 5;
               showEnd = totalLines;
             } else {
               showStart = currentLineIdx - 2;
-              showEnd = currentLineIdx + 3;
+              showEnd = currentLineIdx + 5;
             }
-            $allRomTrs.hide();
-            $allKhaTrs.hide();
+            $allLines.hide();
             for (let i = showStart; i <= showEnd; i++) {
-              $allRomTrs.eq(i).show();
-              $allKhaTrs.eq(i).show();
+              $allLines.eq(i).children().removeClass('current-word').removeClass('current-line');
+              $allLines.eq(i).show();
             }
-            $allRomTrs.removeClass('current-line');
-            $allKhaTrs.removeClass('current-line');
-            currentLines.addClass('current-line');
-            currentLines.next().addClass('current-line');
+            currentLines
+              .children('li')
+              .addClass('current-line')
+              .filter(function (idx, td) {
+                return $(this).data('time') <= currentTime;
+              })
+              .addClass('current-word');
           }
           // console.log('currentTime', currentTime);
           // console.log('audioEle.played', audioEle.played, audioEle.paused);
@@ -81,22 +104,17 @@
           let res = await axios.get('/api/read-file');
           totalLines = res.data.subtitle.length;
           res.data.subtitle.map((line, idx) => {
-            let $trRom = $('<tr>').data('idx', idx).data('type', 'rom').data('start', line.start).data('end', line.end).addClass('rom');
+            let $ul = $('<ul>').data('idx', idx).data('start', line.start).data('end', line.end);
             line.rom.map((r, idx) => {
               let time = line.jump.length === 1 ? line.jump[0] : line.jump[idx];
-              $trRom.append($('<td>').text(r).data('time', time).addClass('rom'));
+              let $li = $('<li>').data('time', time);
+              $li.append($('<span>').text(r).addClass('rom'));
+              $li.append($('<span>').text(line.kha[idx]));
+              $ul.append($li);
             });
-            $subtitle.append($trRom);
-
-            let $trKha = $('<tr>').data('idx', idx).data('type', 'kha').data('start', line.start).data('end', line.end).addClass('kha');
-            line.kha.map((k, idx) => {
-              let time = line.jump.length === 1 ? line.jump[0] : line.jump[idx];
-              $trKha.append($('<td>').data('time', time).text(k));
-            });
-            $subtitle.append($trKha);
+            $subtitle.append($ul);
           });
-          $allRomTrs = $subtitle.find('tr.rom');
-          $allKhaTrs = $subtitle.find('tr.kha');
+          $allLines = $subtitle.find('ul');
           $('#player').attr('src', res.data.audio);
           $('#player').show();
           audioEle.play();
